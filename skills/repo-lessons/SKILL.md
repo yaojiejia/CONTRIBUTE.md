@@ -1,7 +1,7 @@
 ---
 name: repo-lessons
 description: This skill should be used when the user says "log a lesson", "remember that for this repo", "add that to lessons", "don't make that mistake again", "note that for next time", or corrects a wrong assumption about how a repository works. It maintains .repo-intel/LESSONS.md, the per-repo ledger of corrections that the repo-map, issue-hunt, and opt-scan skills read before every run. Also invoked by those three skills to read lessons at the start of a run and record a correction at the end.
-version: 0.1.0
+version: 0.2.0
 ---
 
 # Repo Lessons

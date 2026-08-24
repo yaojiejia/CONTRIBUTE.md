@@ -1,7 +1,7 @@
 ---
 name: issue-hunt
 description: This skill should be used when the user asks to "find me an issue to work on", "what issues are workable", "find issues without PRs", "find an unclaimed issue", "what should I contribute to", "find a good first issue", or "analyze issue 1234" / "do a deep dive on this issue". It triages a repository's open issues down to those with no pull request attached, ranks them by workability, and then produces a deep implementation-ready analysis of a chosen issue.
-version: 0.1.0
+version: 0.2.0
 ---
 
 # Issue Hunt

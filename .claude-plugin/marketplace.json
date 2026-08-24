@@ -5,7 +5,7 @@
   },
   "metadata": {
     "description": "repo-intel: understand a repo fast, accumulate lessons, find workable issues, and scan for optimizations",
-    "version": "0.1.0"
+    "version": "0.2.0"
   },
   "plugins": [
     {
@@ -13,7 +13,14 @@
       "source": "./",
       "description": "Four skills for working in unfamiliar repositories: build a comprehensive repo map, accumulate lessons so the same confusion is never re-derived, find open issues that have no pull request attached and analyze them deeply, and produce a ranked, evidence-backed list of optimization opportunities.",
       "category": "development",
-      "tags": ["repo-analysis", "onboarding", "open-source", "issue-triage", "optimization", "self-improving"]
+      "tags": [
+        "repo-analysis",
+        "onboarding",
+        "open-source",
+        "issue-triage",
+        "optimization",
+        "self-improving"
+      ]
     }
   ]
 }

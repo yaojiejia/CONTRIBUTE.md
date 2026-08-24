@@ -1,7 +1,7 @@
 ---
 name: repo-map
 description: This skill should be used when the user asks to "map this repo", "help me understand this codebase", "what does this repo do", "onboard me to this project", "explain the architecture", "give me a tour of this code", or drops into an unfamiliar repository and needs to get oriented quickly. It generates .repo-intel/REPO-MAP.md — a comprehensive but scannable map covering architecture, module responsibilities, verified build and test commands, primary code paths, hot spots, and gotchas.
-version: 0.1.0
+version: 0.2.0
 ---
 
 # Repo Map

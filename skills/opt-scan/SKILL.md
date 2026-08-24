@@ -1,7 +1,7 @@
 ---
 name: opt-scan
 description: This skill should be used when the user asks "what can be optimized", "find optimization opportunities", "which modules could be improved", "brainstorm optimizations", "where are the performance problems", "what's slow in this repo", or "some modules could be optimized but aren't". It walks every module through a fixed set of optimization lenses, verifies each candidate against real code, and produces a ranked list with evidence, impact, effort, and risk. It reports only and never modifies source.
-version: 0.1.0
+version: 0.2.0
 ---
 
 # Opt Scan
