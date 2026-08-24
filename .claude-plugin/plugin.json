@@ -1,0 +1,12 @@
+{
+  "name": "repo-intel",
+  "description": "Understand a repo fast, accumulate lessons across sessions, find workable issues with no PR attached, and scan modules for optimization opportunities.",
+  "version": "0.1.0",
+  "author": {
+    "name": "yaojiejia"
+  },
+  "homepage": "https://github.com/yaojiejia/CONTRIBUTE.md",
+  "repository": "https://github.com/yaojiejia/CONTRIBUTE.md",
+  "license": "MIT",
+  "keywords": ["repo-analysis", "onboarding", "issue-triage", "optimization", "open-source"]
+}
