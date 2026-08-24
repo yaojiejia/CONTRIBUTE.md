@@ -339,16 +339,60 @@ ENTRYPOINT_PATTERNS = [
 ]
 
 
+NON_ENTRY_DIRS = re.compile(
+    r"^(tests?|docs?|examples?|benchmarks?|scripts?|tools?|samples?|e2e|fixtures)/")
+
+
 def survey_entrypoints(root, files):
     found = []
     for f in files:
-        if VENDOR_RE.search(f):
+        if VENDOR_RE.search(f) or NON_ENTRY_DIRS.match(f):
             continue
         for pat, why in ENTRYPOINT_PATTERNS:
             if pat.match(f):
                 found.append({"path": f, "why": why})
                 break
     return found[:25]
+
+
+CI_COMMAND_PATTERNS = [
+    ("test", re.compile(r"\b(pytest|python -m pytest|go test|cargo test|npm (run )?test|"
+                        r"yarn test|pnpm (run )?test|tox|jest|vitest|make test|"
+                        r"bundle exec rspec|mix test|gradlew test|mvn test)\b")),
+    ("lint", re.compile(r"\b(ruff|mypy|flake8|black|isort|pylint|eslint|prettier|"
+                        r"golangci-lint|clippy|pre-commit run|codespell|actionlint|"
+                        r"make lint|npm run lint)\b")),
+    ("build", re.compile(r"\b(python -m build|cmake --build|go build|cargo build|"
+                         r"npm run build|yarn build|pnpm build|make build|gradlew build|"
+                         r"mvn package|docker build)\b")),
+]
+
+# Shell scaffolding inside a `run:` block that is never the project's own command.
+CI_NOISE = re.compile(
+    r"^(shell:|set -|export |cd |echo |if |fi$|else$|then$|done$|for |while |"
+    r"[A-Z_][A-Z0-9_]*=|#|sudo apt|apt-get|pip install|python -m pip|rm -rf|mkdir|cp |mv )")
+
+
+def commands_from_ci(ci):
+    """Extract real build/test/lint invocations from CI run steps."""
+    out = defaultdict(list)
+    for wf in ci:
+        for line in wf["commands"]:
+            stripped = line.strip()
+            if (not stripped or CI_NOISE.match(stripped) or len(stripped) > 200
+                    or stripped.startswith("-")):
+                continue
+            for kind, pat in CI_COMMAND_PATTERNS:
+                if pat.search(stripped):
+                    if not any(c["cmd"] == stripped for c in out[kind]):
+                        out[kind].append({
+                            "cmd": stripped,
+                            "source": f"ci:{wf['workflow']}",
+                            "verified": False,
+                            "from_ci": True,
+                        })
+                    break
+    return out
 
 
 def survey_ci(root, files):
@@ -363,17 +407,33 @@ def survey_ci(root, files):
         if text is None:
             continue
         name = re.search(r"^name:\s*(.+)$", text, re.M)
+        def join_continuations(raw_lines):
+            """Fold `cmd \\` + following line into one command, within one block."""
+            out_lines, buf = [], ""
+            for raw in raw_lines:
+                stripped = raw.strip()
+                if not stripped or stripped.startswith("#"):
+                    continue
+                if stripped.endswith("\\"):
+                    buf += stripped[:-1].rstrip() + " "
+                    continue
+                out_lines.append((buf + stripped).strip())
+                buf = ""
+            if buf.strip():
+                out_lines.append(buf.strip())
+            return out_lines
+
         cmds = []
-        for m in re.finditer(r"^\s*-?\s*run:\s*\|?\s*(.*)$", text, re.M):
+        # Single-line `run: cmd` steps (the negative lookahead skips block headers).
+        for m in re.finditer(r"^\s*-?\s*run:\s*(?!\|)(\S.*)$", text, re.M):
             line = m.group(1).strip()
             if line:
                 cmds.append(line)
-        # `run: |` blocks put the commands on following indented lines.
+        # `run: |` blocks put the commands on following indented lines. Join
+        # continuations per block so one step's trailing backslash cannot swallow
+        # the first command of the next step.
         for m in re.finditer(r"^(\s*)-?\s*run:\s*\|\s*\n((?:\1\s+\S.*\n?)+)", text, re.M):
-            for line in m.group(2).splitlines():
-                line = line.strip()
-                if line and not line.startswith("#"):
-                    cmds.append(line)
+            cmds.extend(join_continuations(m.group(2).splitlines()))
         seen, uniq = set(), []
         for c in cmds:
             if c not in seen:
@@ -529,7 +589,7 @@ def main():
         return 1
     root = toplevel
 
-    files = tracked_files(root)
+    files = tracked_files(root)  # noqa: E501
     if not files:
         json.dump({"ok": False, "error": "no tracked files (empty repo or unborn HEAD)"}, sys.stdout)
         print()
@@ -537,6 +597,14 @@ def main():
 
     do_lines = len(files) <= LINE_COUNT_FILE_CAP
     manifests, commands = survey_manifests(root, files)
+    ci = survey_ci(root, files)
+
+    # CI is the most reliable statement of how a project actually builds and tests;
+    # a manifest script may be a stale alias or delegate elsewhere. List CI first.
+    for kind, cmds in commands_from_ci(ci).items():
+        existing = commands.get(kind, [])
+        commands[kind] = cmds + [c for c in existing
+                                 if not any(c["cmd"] == x["cmd"] for x in cmds)]
 
     result = {
         "ok": True,
@@ -551,7 +619,7 @@ def main():
         "manifests": manifests,
         "commands": commands,
         "entrypoints": survey_entrypoints(root, files),
-        "ci": survey_ci(root, files),
+        "ci": ci,
         "tests": survey_tests(root, files, manifests),
         "docs": survey_docs(root, files),
         "git": survey_git(root),

@@ -39,17 +39,17 @@ query($owner:String!, $name:String!, $cursor:String, $page:Int!) {
         author { login }
         milestone { title }
         closedByPullRequestsReferences(first:10, includeClosedPrs:true) {
-          nodes { number state isDraft url repository { nameWithOwner } }
+          nodes { number state isDraft url createdAt repository { nameWithOwner } }
         }
         timelineItems(first:50, itemTypes:[CROSS_REFERENCED_EVENT, CONNECTED_EVENT]) {
           nodes {
             __typename
             ... on CrossReferencedEvent {
               willCloseTarget
-              source { __typename ... on PullRequest { number state isDraft url repository { nameWithOwner } } }
+              source { __typename ... on PullRequest { number state isDraft url createdAt repository { nameWithOwner } } }
             }
             ... on ConnectedEvent {
-              subject { __typename ... on PullRequest { number state isDraft url repository { nameWithOwner } } }
+              subject { __typename ... on PullRequest { number state isDraft url createdAt repository { nameWithOwner } } }
             }
           }
         }
@@ -115,6 +115,22 @@ def detect_repo():
     return slug if "/" in slug else None
 
 
+def link_strength(pr, issue_created):
+    """How strongly a linked PR indicates someone is working on this issue.
+
+    strong  — an explicit link: the Development sidebar, or a closing keyword.
+    weak    — the PR merely mentions the issue, but was opened after it existed.
+    none    — the PR predates the issue, so it cannot be work on it. Issues that
+              discuss an existing PR ("after #4253, X still breaks") land here.
+    """
+    if pr.get("via") == "development-link" or pr.get("will_close"):
+        return "strong"
+    pr_created, issue_created = pr.get("createdAt") or "", issue_created or ""
+    if pr_created and issue_created and pr_created < issue_created:
+        return "none"
+    return "weak"
+
+
 def linked_prs(issue):
     """Every PR attached to an issue, from both signals, de-duplicated by number.
 
@@ -139,7 +155,8 @@ def linked_prs(issue):
         if num is None:
             continue
         if num not in found:
-            found[num] = {**node, "via": "cross-reference", "repo": home(node)}
+            found[num] = {**node, "via": "cross-reference", "repo": home(node),
+                          "will_close": bool(ev.get("willCloseTarget"))}
     return list(found.values())
 
 
@@ -168,8 +185,15 @@ def triage(issue, policy):
     # (bots and template repos do this constantly). Only same-repo PRs mean the
     # issue is being worked on; foreign ones are recorded but never exclude.
     this_repo = policy["repo"].lower()
-    prs = [p for p in all_prs if p.get("repo") in ("", this_repo)]
+    same_repo = [p for p in all_prs if p.get("repo") in ("", this_repo)]
     foreign = [p for p in all_prs if p.get("repo") not in ("", this_repo)]
+
+    issue_created = issue.get("createdAt")
+    for p in same_repo:
+        p["strength"] = link_strength(p, issue_created)
+    # A PR opened before the issue existed is not work on that issue.
+    predates = [p for p in same_repo if p["strength"] == "none"]
+    prs = [p for p in same_repo if p["strength"] != "none"]
 
     open_prs = [p for p in prs if p.get("state") == "OPEN"]
     merged_prs = [p for p in prs if p.get("state") == "MERGED"]
@@ -177,9 +201,11 @@ def triage(issue, policy):
 
     # --- hard exclusions -------------------------------------------------
     if open_prs:
-        p = open_prs[0]
+        p = sorted(open_prs, key=lambda x: x["strength"] != "strong")[0]
         draft = " (draft)" if p.get("isDraft") else ""
-        return "exclude", [f"open PR #{p['number']}{draft} attached via {p['via']}"], 0, {}
+        how = ("attached via " + p["via"] if p["strength"] == "strong"
+               else "mentions this issue (opened after it; no closing keyword)")
+        return "exclude", [f"open PR #{p['number']}{draft} {how}"], 0, {}
     if merged_prs and not policy["allow_merged"]:
         return "exclude", [f"merged PR #{merged_prs[0]['number']} attached — likely already fixed"], 0, {}
     if assignees and not policy["allow_assigned"]:
@@ -256,6 +282,7 @@ def triage(issue, policy):
         "has_repro": repro,
         "linked_prs": prs,
         "foreign_references": [f"{p['repo']}#{p['number']}" for p in foreign],
+        "predates_issue": [f"#{p['number']}" for p in predates],
         "flags": flags,
     }
     return "keep", reasons, score, signals
