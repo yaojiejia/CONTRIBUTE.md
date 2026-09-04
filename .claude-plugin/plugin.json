@@ -1,7 +1,7 @@
 {
   "name": "repo-intel",
-  "description": "Understand a repo fast, accumulate lessons across sessions, find workable issues with no PR attached, scan modules for optimization opportunities, and find evidence-backed features worth adding.",
-  "version": "0.4.0",
+  "description": "Understand a repo fast, accumulate lessons across sessions, find workable issues with no PR attached, scan modules for optimization opportunities, find evidence-backed features worth adding, and hunt for bugs that share a shape with issues already filed.",
+  "version": "0.5.0",
   "author": {
     "name": "yaojiejia"
   },
@@ -14,6 +14,7 @@
     "issue-triage",
     "optimization",
     "feature-discovery",
+    "bug-hunting",
     "roadmap",
     "open-source"
   ]
