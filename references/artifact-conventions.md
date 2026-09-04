@@ -1,6 +1,6 @@
 # Artifact conventions
 
-Shared rules for every file the `repo-intel` skills generate. Read once per session; all five skills depend on these.
+Shared rules for every file the `repo-intel` skills generate. Read once per session; all six skills depend on these.
 
 ## Location
 
@@ -15,9 +15,11 @@ All artifacts live in `.repo-intel/` at the **target repo's root** — never in 
 │   └── <number>-analysis.md          # issue-hunt, phase B
 ├── optimizations/
 │   └── OPT-<YYYY-MM-DD>.md           # opt-scan
-└── features/
-    ├── DEMAND-<YYYY-MM-DD>.md        # feature-scan, stated demand
-    └── FEAT-<YYYY-MM-DD>.md          # feature-scan, ranked proposals
+├── features/
+│   ├── DEMAND-<YYYY-MM-DD>.md        # feature-scan, stated demand
+│   └── FEAT-<YYYY-MM-DD>.md          # feature-scan, ranked proposals
+└── bugs/
+    └── BUG-<YYYY-MM-DD>.md           # bug-scan, verified findings and ledger
 ```
 
 `.repo-intel/` is hidden from git via `.git/info/exclude`, which `scripts/intel_init.sh` maintains. **Never add `.repo-intel/` to the repo's tracked `.gitignore`** — that would be a source change in someone else's repo, and it would show up in a PR. The artifacts must never appear in `git status`, a diff, or a pull request.

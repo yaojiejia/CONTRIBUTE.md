@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # intel_init.sh — idempotent bootstrap for a repo's .repo-intel/ directory.
 #
-# Creates <repo-root>/.repo-intel/{issues,optimizations}, hides it via
+# Creates <repo-root>/.repo-intel/{issues,optimizations,features,bugs}, hides it via
 # .git/info/exclude (never touching the tracked .gitignore), and prints a JSON
 # summary of the repo for the calling skill to use.
 #
@@ -19,7 +19,7 @@ fi
 cd "$root"
 
 intel="$root/.repo-intel"
-mkdir -p "$intel/issues" "$intel/optimizations"
+mkdir -p "$intel/issues" "$intel/optimizations" "$intel/features" "$intel/bugs"
 
 # Hide .repo-intel/ from git without dirtying the tracked .gitignore.
 # Use --git-common-dir so this works correctly inside linked worktrees.

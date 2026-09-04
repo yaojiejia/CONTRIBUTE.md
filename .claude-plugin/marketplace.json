@@ -4,14 +4,14 @@
     "name": "yaojiejia"
   },
   "metadata": {
-    "description": "repo-intel: understand a repo fast, accumulate lessons, find workable issues, scan for optimizations, and surface features worth adding",
-    "version": "0.4.0"
+    "description": "repo-intel: understand a repo fast, accumulate lessons, find workable issues, scan for optimizations, surface features worth adding, and hunt for bugs sharing a known shape",
+    "version": "0.5.0"
   },
   "plugins": [
     {
       "name": "repo-intel",
       "source": "./",
-      "description": "Five skills for working in unfamiliar repositories: build a comprehensive repo map, accumulate lessons so the same confusion is never re-derived, find open issues that have no pull request attached and analyze them deeply, produce a ranked, evidence-backed list of optimization opportunities, and find features worth adding that are verified absent and in scope.",
+      "description": "Six skills for working in unfamiliar repositories: build a comprehensive repo map, accumulate lessons so the same confusion is never re-derived, find open issues that have no pull request attached and analyze them deeply, produce a ranked, evidence-backed list of optimization opportunities, find features worth adding that are verified absent and in scope, and take a set of filed bugs, extract their common shape, and find every other place in the code that is broken the same way.",
       "category": "development",
       "tags": [
         "repo-analysis",
@@ -20,6 +20,7 @@
         "issue-triage",
         "optimization",
         "feature-discovery",
+        "bug-hunting",
         "self-improving"
       ]
     }
